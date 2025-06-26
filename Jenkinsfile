@@ -7,10 +7,8 @@ pipeline {
     environment {
         APP_NAME = "register-app-pipeline"
         RELEASE = "1.0.0"
-        DOCKER_USER = "kittappaprathapa"
-        IMAGE_NAME = "${DOCKER_USER}/${APP_NAME}"
+        IMAGE_NAME = "kittappaprathapa/${APP_NAME}"
         IMAGE_TAG = "${RELEASE}-${BUILD_NUMBER}"
-        JENKINS_API_TOKEN = credentials("JENKINS_API_TOKEN")
     }
 
     stages {
@@ -45,8 +43,7 @@ pipeline {
                         sh """
                             mvn sonar:sonar \
                             -Dsonar.projectKey=register-app \
-                            -Dsonar.host.url=$SONAR_HOST_URL \
-                            -Dsonar.token=$SONAR_TOKEN
+                            -Dsonar.token=${SONAR_TOKEN}
                         """
                     }
                 }
@@ -63,7 +60,7 @@ pipeline {
 
         stage("Build & Push Docker Image") {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_PASS')]) {
                     script {
                         docker.withRegistry('', 'dockerhub') {
                             def docker_image = docker.build("${IMAGE_NAME}")
@@ -94,9 +91,9 @@ pipeline {
 
         stage("Trigger CD Pipeline") {
             steps {
-                script {
+                withCredentials([string(credentialsId: 'JENKINS_API_TOKEN', variable: 'JENKINS_TOKEN')]) {
                     sh """
-                        curl -v -k --user admin:${JENKINS_API_TOKEN} -X POST \
+                        curl -v -k --user admin:${JENKINS_TOKEN} -X POST \
                         -H 'cache-control: no-cache' \
                         -H 'content-type: application/x-www-form-urlencoded' \
                         --data 'IMAGE_TAG=${IMAGE_TAG}' \
