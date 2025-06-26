@@ -40,11 +40,11 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'jenkins-sonarqube-token', variable: 'SONAR_TOKEN')]) {
                     withSonarQubeEnv('sonarqube-server') {
-                        sh """
+                        sh '''
                             mvn sonar:sonar \
                             -Dsonar.projectKey=register-app \
-                            -Dsonar.token=${SONAR_TOKEN}
-                        """
+                            -Dsonar.token=$SONAR_TOKEN
+                        '''
                     }
                 }
             }
@@ -92,13 +92,13 @@ pipeline {
         stage("Trigger CD Pipeline") {
             steps {
                 withCredentials([string(credentialsId: 'JENKINS_API_TOKEN', variable: 'JENKINS_TOKEN')]) {
-                    sh """
-                        curl -v -k --user admin:${JENKINS_TOKEN} -X POST \
+                    sh '''
+                        curl -v -k --user admin:$JENKINS_TOKEN -X POST \
                         -H 'cache-control: no-cache' \
                         -H 'content-type: application/x-www-form-urlencoded' \
-                        --data 'IMAGE_TAG=${IMAGE_TAG}' \
-                        'http://ec2-13-233-42-35.ap-south-1.compute.amazonaws.com:8080/job/gitops-register-app-cd/buildWithParameters?token=gitops-token'
-                    """
+                        --data "IMAGE_TAG=$IMAGE_TAG" \
+                        http://ec2-13-234-66-161.ap-south-1.compute.amazonaws.com:8080/job/gitops-register-app-cd/buildWithParameters?token=gitops-token
+                    '''
                 }
             }
         }
